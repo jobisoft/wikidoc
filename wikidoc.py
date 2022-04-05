@@ -34,7 +34,7 @@ def getFilesInDirectory(dir, failOnError=True):
     elif not failOnError:
         return False
     else:
-        print "Folder <" + dir + "> does not exist. Aborting."
+        print("Folder <" + dir + "> does not exist. Aborting.")
         sys.exit(0)
 
 
@@ -55,7 +55,7 @@ def parseFile(path, file):
     # Try to convert the source via pandoc to html, otherwise simply
     # open it and treat as pure html
     try:
-        html = subprocess.check_output("pandoc --ascii -r gfm " + path + file, shell=True)
+        html = subprocess.check_output("pandoc --ascii -r gfm " + path + file, shell=True).decode(sys.stdout.encoding).strip()
     except subprocess.CalledProcessError:
         print (
         "Could not convert " + file + " with pandoc from github markdown to html, trying to open it as plain html.")
@@ -89,12 +89,12 @@ def parseFile(path, file):
                 image_file.write(wikidocConfig["HEAD"] + "\n" + section + "\n" + wikidocConfig["FOOT"])
 
             # Convert HTML to IMAGE
-            print " -> Converting PDFONLY section <" + name + "> to PNG."
+            print(" -> Converting PDFONLY section <" + name + "> to PNG.")
             cmd = pathWkhtmltoimage + " --width 700 wikidoc_image.html " + pathWiki + "generated-images/" + name + ".PNG"
             try:
                 subprocess.call(cmd, shell=True)
             except OSError:
-                print "Something went wrong converting PDFONLY section to PNG."
+                print("Something went wrong converting PDFONLY section to PNG.")
 
             # Delete temp file
             os.unlink("wikidoc_image.html")
@@ -142,13 +142,13 @@ def readGlobalWikidocComments(file):
                 else:
                     wkhtmltopdfConfig.append(stripline)
 
-            if not wikidocConfig.has_key("filename"):
+            if not "filename" in wikidocConfig:
                 wikidocConfig["filename"] = "wikidoc.pdf"
 
             return (wikidocConfig, wkhtmltopdfConfig)
 
     except Exception as error:
-        print "Could not read file " + file + " or did not find required wikidoc comments!\n"
+        print("Could not read file " + file + " or did not find required wikidoc comments!\n")
         exit()
 
 
@@ -159,7 +159,7 @@ def readGlobalWikidocComments(file):
 
 # Get path-to-wkhtmltox and path to wiki
 if not len(sys.argv) == 3:
-    print "usage:\n\t" + sys.argv[0] + " <path-to-wkhtmltopdf> <path-to-wiki-folder>\n\n"
+    print("usage:\n\t" + sys.argv[0] + " <path-to-wkhtmltopdf> <path-to-wiki-folder>\n\n")
     exit()
 
 # because windows does not handle POSIX paths for calls to exe-files, we replace / with \
@@ -178,23 +178,25 @@ pathWkhtmltoimage = os.path.dirname(pathWkhtmltopdf) + os.sep + "wkhtmltoimage"
 
 # In order to handle windows-executables also check for exe files
 if (not os.path.isfile(pathWkhtmltoimage)):
+    print(f"pathWkhtmltoimage: {os.path.isfile(pathWkhtmltoimage)}{pathWkhtmltoimage}")
     pathWkhtmltoimage = pathWkhtmltoimage + ".exe"
 
 if (not os.path.isfile(pathWkhtmltoimage)):
-    print "PDFONLY segements will not be saved as images, because 'wkhtmltoimage'"
-    print "is not found next to wkhtmltopdf.\n"
+    print("PDFONLY segements will not be saved as images, because 'wkhtmltoimage'")
+    print("is not found next to wkhtmltopdf.\n")
     generateImages = False
 
 # Check, if generated-images folder exists in pathWiki
 if (generateImages and not os.path.isdir(pathWiki + "generated-images")):
-    print "PDFONLY segements will not be saved as images, because 'generated-images'"
-    print "folder not found in wiki repository.\n"
+    print("PDFONLY segements will not be saved as images, because 'generated-images'")
+    print("folder not found in wiki repository.\n")
     generateImages = False
 
-11
 # Home.md must be present and it must contain special comments with additional
 # informations
 (wikidocConfig, wkhtmltopdfConfig) = readGlobalWikidocComments(pathWiki + "Home.md")
+
+print(f'Here')
 
 # Build html, start with global head
 html = list()
@@ -204,7 +206,7 @@ html.append(wikidocConfig["HEAD"])
 html.append(parseFile(pathWiki, "Home.md"))
 
 if os.path.exists(pathWiki + '_Sidebar.md'):
-    print 'Using _Sidebar.md for ordering of md-files'
+    print('Using _Sidebar.md for ordering of md-files')
     # Read entries in sidebar file to determine the ordering of chapters for the compiled 
     # pdf-document
     with open(pathWiki + '_Sidebar.md', 'r') as myfile:
@@ -215,7 +217,7 @@ if os.path.exists(pathWiki + '_Sidebar.md'):
     # make a list of the markdown-files referenced from the sidebar
     files = []
     for entry in sidebarEntries:
-    	filename = entry
+        filename = entry
         
         if not entry.lower().endswith(".md"):
             filename = filename + ".md"
@@ -226,7 +228,7 @@ if os.path.exists(pathWiki + '_Sidebar.md'):
         else:
             print("Ignoring _Sidebar.md-entry \"" + entry + "\"")
 else:
-    print 'Using alphabetical ordering of md-files'
+    print('Using alphabetical ordering of md-files')
     files = sorted(getFilesInDirectory(pathWiki), key=lambda s: s.lower())
 
 # Append all other files to the document except Home.md
@@ -269,9 +271,9 @@ cmd = cmd + keepfiles["main"] + " " + pathWiki + wikidocConfig["filename"]
 try:
     subprocess.call(cmd, shell=True)
 except OSError:
-    print "Something went wrong calling " + pathWkhtmltopdf + " on " + wikidocConfig["filename"] + ".html"
+    print("Something went wrong calling " + pathWkhtmltopdf + " on " + wikidocConfig["filename"] + ".html")
 
 # Delete all created temp files
-for tempfile in tempfiles.itervalues():
+for tempfile in tempfiles.values():
     if (os.path.isfile(tempfile)):
         os.unlink(tempfile)
